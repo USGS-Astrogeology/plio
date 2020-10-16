@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>&lt;no title&gt; &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../index.html" >
+    <link rel="up" title="Getting Started with AutoCNet" href="index.html" >
+    <link rel="next" title="Plio Reference" href="../../library/index.html" >
+    <link rel="prev" title="Reading a Spatial Data Set using the GDAL Wrapper" href="GeoDataset.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../index.html" >User Guide</a></li>
+          <li class="active"><a href="index.html" accesskey="U">Getting Started with AutoCNet</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="../../library/index.html" title="Plio Reference"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="GeoDataset.html" title="Reading a Spatial Data Set using the GDAL Wrapper"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="GeoDataset.html"
+                        title="previous chapter">Reading a Spatial Data Set using the GDAL Wrapper</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../../library/index.html"
+                        title="next chapter">Plio Reference</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/users/tutorials/tes.ipynb.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/users/tutorials/tes.ipynb.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>import plio
+from plio.io.io_tes import Tes
+from plio.examples import get_path
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>pos = Tes(get_path(&#39;pos10001.tab&#39;))
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>pos.data
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sclk_time</th>
+      <th>et</th>
+      <th>pos</th>
+      <th>sun</th>
+      <th>quat</th>
+      <th>id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>604702680</td>
+      <td>-2.649248e+07</td>
+      <td>(1321.625, 3328.09814453125, -1171.3719482421875)</td>
+      <td>(242380016.0, 35959824.0, 9939954.0)</td>
+      <td>(0.1824042946100235, -0.3314073383808136, -0.4...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>604702684</td>
+      <td>-2.649247e+07</td>
+      <td>(1331.2796630859375, 3327.698974609375, -1161....</td>
+      <td>(242379984.0, 35959904.0, 9939991.0)</td>
+      <td>(0.18153679370880127, -0.33282148838043213, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>604702686</td>
+      <td>-2.649247e+07</td>
+      <td>(1336.1007080078125, 3327.483154296875, -1157....</td>
+      <td>(242379984.0, 35959940.0, 9940010.0)</td>
+      <td>(0.18109986186027527, -0.33354103565216064, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>604702688</td>
+      <td>-2.649247e+07</td>
+      <td>(1340.9173583984375, 3327.2568359375, -1152.47...</td>
+      <td>(242379968.0, 35959980.0, 9940028.0)</td>
+      <td>(0.1806604117155075, -0.33425629138946533, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>604702690</td>
+      <td>-2.649247e+07</td>
+      <td>(1345.729736328125, 3327.02001953125, -1147.73...</td>
+      <td>(242379968.0, 35960020.0, 9940047.0)</td>
+      <td>(0.1802179366350174, -0.33496642112731934, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>604702692</td>
+      <td>-2.649247e+07</td>
+      <td>(1350.5379638671875, 3326.772216796875, -1143....</td>
+      <td>(242379952.0, 35960060.0, 9940065.0)</td>
+      <td>(0.1797812581062317, -0.33567821979522705, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>604702694</td>
+      <td>-2.649246e+07</td>
+      <td>(1355.3416748046875, 3326.513916015625, -1138....</td>
+      <td>(242379952.0, 35960100.0, 9940083.0)</td>
+      <td>(0.17935168743133545, -0.3363921642303467, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>604702696</td>
+      <td>-2.649246e+07</td>
+      <td>(1360.1412353515625, 3326.2451171875, -1133.51...</td>
+      <td>(242379936.0, 35960140.0, 9940102.0)</td>
+      <td>(0.17892010509967804, -0.33710038661956787, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>604702698</td>
+      <td>-2.649246e+07</td>
+      <td>(1364.936279296875, 3325.96533203125, -1128.76...</td>
+      <td>(242379936.0, 35960180.0, 9940120.0)</td>
+      <td>(0.17848612368106842, -0.3378016948699951, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>604702700</td>
+      <td>-2.649246e+07</td>
+      <td>(1369.7271728515625, 3325.675048828125, -1124....</td>
+      <td>(242379920.0, 35960220.0, 9940139.0)</td>
+      <td>(0.17805038392543793, -0.3385055959224701, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>604702872</td>
+      <td>-2.649229e+07</td>
+      <td>(1763.795654296875, 3261.053955078125, -703.44...</td>
+      <td>(242379136.0, 35963636.0, 9941726.0)</td>
+      <td>(0.14008298516273499, -0.39840176701545715, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>604702876</td>
+      <td>-2.649228e+07</td>
+      <td>(1772.500244140625, 3258.625732421875, -693.42...</td>
+      <td>(242379120.0, 35963712.0, 9941763.0)</td>
+      <td>(0.13917456567287445, -0.3997543156147003, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>604702878</td>
+      <td>-2.649228e+07</td>
+      <td>(1776.843994140625, 3257.39599609375, -688.412...</td>
+      <td>(242379104.0, 35963752.0, 9941782.0)</td>
+      <td>(0.13872121274471283, -0.40044155716896057, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>604702880</td>
+      <td>-2.649228e+07</td>
+      <td>(1781.18212890625, 3256.15576171875, -683.3973...</td>
+      <td>(242379104.0, 35963792.0, 9941800.0)</td>
+      <td>(0.13827399909496307, -0.40112653374671936, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>604702882</td>
+      <td>-2.649228e+07</td>
+      <td>(1785.5146484375, 3254.9052734375, -678.380310...</td>
+      <td>(242379088.0, 35963832.0, 9941819.0)</td>
+      <td>(0.1378343552350998, -0.40180885791778564, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>604702884</td>
+      <td>-2.649227e+07</td>
+      <td>(1789.8414306640625, 3253.644287109375, -673.3...</td>
+      <td>(242379088.0, 35963872.0, 9941837.0)</td>
+      <td>(0.13739295303821564, -0.4024978578090668, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>604702886</td>
+      <td>-2.649227e+07</td>
+      <td>(1794.1624755859375, 3252.373046875, -668.3395...</td>
+      <td>(242379072.0, 35963912.0, 9941856.0)</td>
+      <td>(0.13694943487644196, -0.40319517254829407, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>604702888</td>
+      <td>-2.649227e+07</td>
+      <td>(1798.477783203125, 3251.09130859375, -663.316...</td>
+      <td>(242379056.0, 35963952.0, 9941874.0)</td>
+      <td>(0.13650058209896088, -0.40388038754463196, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>604702890</td>
+      <td>-2.649227e+07</td>
+      <td>(1802.787353515625, 3249.79931640625, -658.290...</td>
+      <td>(242379056.0, 35963992.0, 9941892.0)</td>
+      <td>(0.13604523241519928, -0.4045509099960327, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>604702892</td>
+      <td>-2.649227e+07</td>
+      <td>(1807.09130859375, 3248.496826171875, -653.262...</td>
+      <td>(242379040.0, 35964032.0, 9941911.0)</td>
+      <td>(0.13559292256832123, -0.40522345900535583, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>604702894</td>
+      <td>-2.649226e+07</td>
+      <td>(1811.389404296875, 3247.183837890625, -648.23...</td>
+      <td>(242379040.0, 35964072.0, 9941929.0)</td>
+      <td>(0.13514433801174164, -0.4058985114097595, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>604703064</td>
+      <td>-2.649209e+07</td>
+      <td>(2154.297119140625, 3098.24658203125, -214.761...</td>
+      <td>(242378256.0, 35967448.0, 9943498.0)</td>
+      <td>(0.09671157598495483, -0.4623425304889679, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>604703068</td>
+      <td>-2.649209e+07</td>
+      <td>(2161.79931640625, 3093.86865234375, -204.4632...</td>
+      <td>(242378240.0, 35967524.0, 9943535.0)</td>
+      <td>(0.09579837322235107, -0.46363431215286255, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>604703070</td>
+      <td>-2.649209e+07</td>
+      <td>(2165.5400390625, 3091.6650390625, -199.312927...</td>
+      <td>(242378240.0, 35967564.0, 9943554.0)</td>
+      <td>(0.09533984214067459, -0.46428006887435913, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>604703072</td>
+      <td>-2.649209e+07</td>
+      <td>(2169.274169921875, 3089.451416015625, -194.16...</td>
+      <td>(242378224.0, 35967604.0, 9943572.0)</td>
+      <td>(0.09488427639007568, -0.46492496132850647, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>604703074</td>
+      <td>-2.649208e+07</td>
+      <td>(2173.001220703125, 3087.22802734375, -189.010...</td>
+      <td>(242378208.0, 35967644.0, 9943591.0)</td>
+      <td>(0.09443235397338867, -0.46556881070137024, -0...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>604703076</td>
+      <td>-2.649208e+07</td>
+      <td>(2176.721435546875, 3084.994873046875, -183.85...</td>
+      <td>(242378208.0, 35967684.0, 9943609.0)</td>
+      <td>(0.093976229429245, -0.4662158489227295, -0.50...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>604703078</td>
+      <td>-2.649208e+07</td>
+      <td>(2180.4345703125, 3082.751953125, -178.7055206...</td>
+      <td>(242378192.0, 35967724.0, 9943628.0)</td>
+      <td>(0.09351497888565063, -0.4668668508529663, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>604703080</td>
+      <td>-2.649208e+07</td>
+      <td>(2184.140869140625, 3080.499267578125, -173.55...</td>
+      <td>(242378192.0, 35967764.0, 9943646.0)</td>
+      <td>(0.09305869042873383, -0.46751669049263, -0.50...</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>604703082</td>
+      <td>-2.649208e+07</td>
+      <td>(2187.84033203125, 3078.236572265625, -168.398...</td>
+      <td>(242378176.0, 35967804.0, 9943664.0)</td>
+      <td>(0.0926084965467453, -0.46816515922546387, -0....</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>19821</th>
+      <td>605129704</td>
+      <td>-2.606545e+07</td>
+      <td>(-848.8919067382812, -3402.706787109375, 1454....</td>
+      <td>(240235392.0, 44406032.0, 13871953.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19822</th>
+      <td>605129706</td>
+      <td>-2.606545e+07</td>
+      <td>(-853.8307495117188, -3403.334228515625, 1449....</td>
+      <td>(240235392.0, 44406072.0, 13871971.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19823</th>
+      <td>605129708</td>
+      <td>-2.606545e+07</td>
+      <td>(-858.7669067382812, -3403.950927734375, 1445....</td>
+      <td>(240235376.0, 44406112.0, 13871989.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19824</th>
+      <td>605129710</td>
+      <td>-2.606545e+07</td>
+      <td>(-863.7003784179688, -3404.556884765625, 1440....</td>
+      <td>(240235360.0, 44406152.0, 13872008.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19825</th>
+      <td>605129712</td>
+      <td>-2.606545e+07</td>
+      <td>(-868.6311645507812, -3405.15234375, 1436.3658...</td>
+      <td>(240235360.0, 44406192.0, 13872026.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19826</th>
+      <td>605129714</td>
+      <td>-2.606544e+07</td>
+      <td>(-873.5592651367188, -3405.737060546875, 1431....</td>
+      <td>(240235344.0, 44406228.0, 13872044.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19827</th>
+      <td>605129716</td>
+      <td>-2.606544e+07</td>
+      <td>(-878.484619140625, -3406.31103515625, 1427.35...</td>
+      <td>(240235328.0, 44406268.0, 13872063.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19828</th>
+      <td>605129718</td>
+      <td>-2.606544e+07</td>
+      <td>(-883.4072265625, -3406.874267578125, 1422.838...</td>
+      <td>(240235328.0, 44406308.0, 13872081.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19829</th>
+      <td>605129720</td>
+      <td>-2.606544e+07</td>
+      <td>(-888.3271484375, -3407.427001953125, 1418.319...</td>
+      <td>(240235312.0, 44406348.0, 13872099.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19830</th>
+      <td>605129722</td>
+      <td>-2.606544e+07</td>
+      <td>(-893.2442626953125, -3407.968994140625, 1413....</td>
+      <td>(240235296.0, 44406388.0, 13872118.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19831</th>
+      <td>605129724</td>
+      <td>-2.606543e+07</td>
+      <td>(-898.1585693359375, -3408.50048828125, 1409.2...</td>
+      <td>(240235296.0, 44406428.0, 13872136.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19832</th>
+      <td>605129726</td>
+      <td>-2.606543e+07</td>
+      <td>(-903.0701293945312, -3409.021240234375, 1404....</td>
+      <td>(240235280.0, 44406468.0, 13872155.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19833</th>
+      <td>605129728</td>
+      <td>-2.606543e+07</td>
+      <td>(-907.9788818359375, -3409.53125, 1400.2022705...</td>
+      <td>(240235264.0, 44406504.0, 13872173.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19834</th>
+      <td>605129730</td>
+      <td>-2.606543e+07</td>
+      <td>(-912.884765625, -3410.030517578125, 1395.6618...</td>
+      <td>(240235264.0, 44406544.0, 13872191.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19835</th>
+      <td>605129732</td>
+      <td>-2.606543e+07</td>
+      <td>(-917.787841796875, -3410.51904296875, 1391.11...</td>
+      <td>(240235248.0, 44406584.0, 13872210.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19836</th>
+      <td>605129734</td>
+      <td>-2.606542e+07</td>
+      <td>(-922.68798828125, -3410.9970703125, 1386.5678...</td>
+      <td>(240235232.0, 44406624.0, 13872228.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19837</th>
+      <td>605129736</td>
+      <td>-2.606542e+07</td>
+      <td>(-927.5853271484375, -3411.46435546875, 1382.0...</td>
+      <td>(240235216.0, 44406664.0, 13872246.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19838</th>
+      <td>605129738</td>
+      <td>-2.606542e+07</td>
+      <td>(-932.4797973632812, -3411.921142578125, 1377....</td>
+      <td>(240235216.0, 44406704.0, 13872265.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19839</th>
+      <td>605129740</td>
+      <td>-2.606542e+07</td>
+      <td>(-937.3712768554688, -3412.366943359375, 1372....</td>
+      <td>(240235200.0, 44406744.0, 13872283.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19840</th>
+      <td>605129742</td>
+      <td>-2.606542e+07</td>
+      <td>(-942.2598876953125, -3412.80224609375, 1368.3...</td>
+      <td>(240235184.0, 44406780.0, 13872302.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19841</th>
+      <td>605129744</td>
+      <td>-2.606541e+07</td>
+      <td>(-947.1455688476562, -3413.226806640625, 1363....</td>
+      <td>(240235184.0, 44406820.0, 13872320.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19842</th>
+      <td>605129746</td>
+      <td>-2.606541e+07</td>
+      <td>(-952.0282592773438, -3413.640625, 1359.181640...</td>
+      <td>(240235168.0, 44406860.0, 13872338.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19843</th>
+      <td>605129748</td>
+      <td>-2.606541e+07</td>
+      <td>(-956.9080200195312, -3414.043701171875, 1354....</td>
+      <td>(240235152.0, 44406900.0, 13872357.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19844</th>
+      <td>605129750</td>
+      <td>-2.606541e+07</td>
+      <td>(-961.7847900390625, -3414.436279296875, 1350....</td>
+      <td>(240235152.0, 44406940.0, 13872375.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19845</th>
+      <td>605129752</td>
+      <td>-2.606541e+07</td>
+      <td>(-966.6585693359375, -3414.81787109375, 1345.4...</td>
+      <td>(240235136.0, 44406980.0, 13872393.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19846</th>
+      <td>605129754</td>
+      <td>-2.606540e+07</td>
+      <td>(-971.529296875, -3415.18896484375, 1340.83837...</td>
+      <td>(240235120.0, 44407016.0, 13872412.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19847</th>
+      <td>605129756</td>
+      <td>-2.606540e+07</td>
+      <td>(-976.3970336914062, -3415.54931640625, 1336.2...</td>
+      <td>(240235120.0, 44407056.0, 13872430.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19848</th>
+      <td>605129758</td>
+      <td>-2.606540e+07</td>
+      <td>(-981.26171875, -3415.89892578125, 1331.641357...</td>
+      <td>(240235104.0, 44407096.0, 13872448.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19849</th>
+      <td>605129760</td>
+      <td>-2.606540e+07</td>
+      <td>(-986.1233520507812, -3416.238037109375, 1327....</td>
+      <td>(240235088.0, 44407136.0, 13872467.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+    <tr>
+      <th>19850</th>
+      <td>605129762</td>
+      <td>-2.606540e+07</td>
+      <td>(-990.9818725585938, -3416.566162109375, 1322....</td>
+      <td>(240235088.0, 44407176.0, 13872485.0)</td>
+      <td>(0.0, -0.0, -0.0, -0.0)</td>
+      <td>(b'c', b'c')</td>
+    </tr>
+  </tbody>
+</table>
+<p>19851 rows × 6 columns</p>
+</div></div>
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

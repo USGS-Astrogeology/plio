@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>io.io_krc — KRC Thermal Model Reader &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../index.html" >
+    <link rel="up" title="Input/Output" href="../io.html" >
+    <link rel="next" title="io.io_json — JSON Wrapper" href="json.html" >
+    <link rel="prev" title="io.isis_serial_number — Generate ISIS3 Compliant Serial Numbers" href="isis_serial_numbers.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../index.html" >Plio Reference</a></li>
+          <li class="active"><a href="../io.html" accesskey="U">Input/Output</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="json.html" title="io.io_json — JSON Wrapper"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="isis_serial_numbers.html" title="io.isis_serial_number — Generate ISIS3 Compliant Serial Numbers"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="isis_serial_numbers.html"
+                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.isis_serial_number</span></code> — Generate ISIS3 Compliant Serial Numbers</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="json.html"
+                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_json</span></code> — JSON Wrapper</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/library/io/krc.rst.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/library/io/krc.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="io-io-krc-krc-thermal-model-reader">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_krc</span></code> — KRC Thermal Model Reader<a class="headerlink" href="#io-io-krc-krc-thermal-model-reader" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_krc`module</span> <span class="pre">supports</span> <span class="pre">reading</span> <span class="pre">KRC</span> <span class="pre">thermal</span> <span class="pre">model</span> <span class="pre">Bin52</span> <span class="pre">and</span> <span class="pre">`.tds</span></code> files
+for both the floating point and double versions.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.1.1.</span></p>
+</div>
+<span class="target" id="module-plio.io.io_krc"></span><dl class="py class">
+<dt id="plio.io.io_krc.ReadBin52">
+<em class="property">class </em><code class="sig-prename descclassname">plio.io.io_krc.</code><code class="sig-name descname">ReadBin52</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">headerlen</span><span class="o">=</span><span class="default_value">512</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_krc.html#ReadBin52"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_krc.ReadBin52" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to read a bin 52 and organize the output</p>
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.bin52data">
+<code class="sig-name descname">bin52data</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.bin52data" title="Permalink to this definition">¶</a></dt>
+<dd><p>The raw, n-dimensional KRC data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.casesize">
+<code class="sig-name descname">casesize</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.casesize" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of bytes in each KRC case</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.date">
+<code class="sig-name descname">date</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.date" title="Permalink to this definition">¶</a></dt>
+<dd><p>The date the read file was created</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.ddd">
+<code class="sig-name descname">ddd</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.ddd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raw temperature data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.ddd_pd">
+<code class="sig-name descname">ddd_pd</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.ddd_pd" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pandas dataframe of surface temperature data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.filename">
+<code class="sig-name descname">filename</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the KRC file that was input</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.header">
+<code class="sig-name descname">header</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.header" title="Permalink to this definition">¶</a></dt>
+<dd><p>The KRC header unpack to a list of ints</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.headerlength">
+<code class="sig-name descname">headerlength</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.headerlength" title="Permalink to this definition">¶</a></dt>
+<dd><p>The length, in bytes, of the KRC header</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.ncases">
+<code class="sig-name descname">ncases</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.ncases" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of different cases the model was run for</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.ndim">
+<code class="sig-name descname">ndim</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.ndim" title="Permalink to this definition">¶</a></dt>
+<dd><p>TBD</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.ndx">
+<code class="sig-name descname">ndx</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.ndx" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of indices for a single KRC run</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.nhours">
+<code class="sig-name descname">nhours</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.nhours" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of hour bins per 24 Mars hours</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.nlats">
+<code class="sig-name descname">nlats</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.nlats" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of valid, non-zero latitude bins</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.nseasons">
+<code class="sig-name descname">nseasons</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.nseasons" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of seasons the model was run for</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.nvariables">
+<code class="sig-name descname">nvariables</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.nvariables" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of variables contained within the KRC
+lookup table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.structdtype">
+<code class="sig-name descname">structdtype</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.structdtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Describing endianess and data type</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.temperature_data">
+<code class="sig-name descname">temperature_data</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.temperature_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A multi-indexed dataframe of surface temperatures</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.transferedlayers">
+<code class="sig-name descname">transferedlayers</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.transferedlayers" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of KRC transfered layers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.version">
+<code class="sig-name descname">version</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>The krc verison used to create the file in the form
+[major, minor, release]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_krc.ReadBin52.words_per_krc">
+<code class="sig-name descname">words_per_krc</code><a class="headerlink" href="#plio.io.io_krc.ReadBin52.words_per_krc" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of bytes per krc entry</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plio.io.io_krc.ReadBin52.definekrc">
+<code class="sig-name descname">definekrc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">what</span><span class="o">=</span><span class="default_value">'KRC'</span></em>, <em class="sig-param"><span class="n">endianness</span><span class="o">=</span><span class="default_value">'&lt;'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_krc.html#ReadBin52.definekrc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_krc.ReadBin52.definekrc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines a custom binary data structure for the KRC files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plio.io.io_krc.ReadBin52.readbin5">
+<code class="sig-name descname">readbin5</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">headerlen</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_krc.html#ReadBin52.readbin5"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_krc.ReadBin52.readbin5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the type 52 file containing KRC output.</p>
+<p>Tested with KRC version 2.2.2.  Note that the output format
+can change</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>) </strong><strong>Full PATH to the file</strong> (<em>filename</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plio.io.io_krc.ReadBin52.readcase">
+<code class="sig-name descname">readcase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">case</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_krc.html#ReadBin52.readcase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_krc.ReadBin52.readcase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a single dimension (case) from a bin52 file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>case</strong> (<em>int</em>) – The case to be extracted</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

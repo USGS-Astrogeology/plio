@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>io.io_json — JSON Wrapper &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../index.html" >
+    <link rel="up" title="Input/Output" href="../io.html" >
+    <link rel="next" title="io.io_yaml — Super Simple YAML Reader" href="yaml.html" >
+    <link rel="prev" title="io.io_krc — KRC Thermal Model Reader" href="krc.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../index.html" >Plio Reference</a></li>
+          <li class="active"><a href="../io.html" accesskey="U">Input/Output</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="yaml.html" title="io.io_yaml — Super Simple YAML Reader"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="krc.html" title="io.io_krc — KRC Thermal Model Reader"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="krc.html"
+                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_krc</span></code> — KRC Thermal Model Reader</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="yaml.html"
+                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_yaml</span></code> — Super Simple YAML Reader</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/library/io/json.rst.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/library/io/json.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="io-io-json-json-wrapper">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_json</span></code> — JSON Wrapper<a class="headerlink" href="#io-io-json-json-wrapper" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_json</span></code> module provides a convenience wrapper to access JSON
+.. versionadded:: 0.1.0</p>
+<span class="target" id="module-plio.io.io_json"></span><dl class="py class">
+<dt id="plio.io.io_json.NumpyEncoder">
+<em class="property">class </em><code class="sig-prename descclassname">plio.io.io_json.</code><code class="sig-name descname">NumpyEncoder</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">skipkeys</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">ensure_ascii</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">check_circular</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">allow_nan</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">sort_keys</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">indent</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">separators</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_json.html#NumpyEncoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_json.NumpyEncoder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="plio.io.io_json.NumpyEncoder.default">
+<code class="sig-name descname">default</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_json.html#NumpyEncoder.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_json.NumpyEncoder.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method in a subclass such that it returns
+a serializable object for <code class="docutils literal notranslate"><span class="pre">o</span></code>, or calls the base implementation
+(to raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>).</p>
+<p>For example, to support arbitrary iterators, you could
+implement default like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+    <span class="c1"># Let the base class default method raise the TypeError</span>
+    <span class="k">return</span> <span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.io.io_json.read_json">
+<code class="sig-prename descclassname">plio.io.io_json.</code><code class="sig-name descname">read_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputfile</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_json.html#read_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_json.read_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the input json file into a python dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inputfile</strong> (<em>str</em>) – PATH to the file on disk</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>jobs</strong> – returns a dictionary</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.io.io_json.write_json">
+<code class="sig-prename descclassname">plio.io.io_json.</code><code class="sig-name descname">write_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">outdata</span></em>, <em class="sig-param"><span class="n">outputfile</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_json.html#write_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_json.write_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a Python dictionary as a plain-text JSON file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>outdata</strong> (<em>dict</em>) – The data structure to be serialized</p></li>
+<li><p><strong>outputfile</strong> (<em>str</em>) – The file to write the data to.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>plio.io.io_spectral_profiler &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" >
+    <link rel="search" title="Search" href="../../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../../index.html" >
+    <link rel="up" title="Module code" href="../../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../../index.html" accesskey="U">Module code</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <h1>Source code for plio.io.io_spectral_profiler</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pvl</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">plio.utils.utils</span> <span class="kn">import</span> <span class="n">find_in_dict</span>
+
+<div class="viewcode-block" id="Spectral_Profiler"><a class="viewcode-back" href="../../../library/io/spectral_profiler.html#plio.io.io_spectral_profiler.Spectral_Profiler">[docs]</a><span class="k">class</span> <span class="nc">Spectral_Profiler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    spectra : panel</span>
+<span class="sd">              A pandas panel containing n individual spectra.</span>
+
+<span class="sd">    ancillary_data : dataframe</span>
+<span class="sd">                     A pandas DataFrame of the parsed ancillary data (PVL label)</span>
+
+<span class="sd">    label : object</span>
+<span class="sd">            The raw PVL label object</span>
+
+<span class="sd">    offsets : dict</span>
+<span class="sd">              with key as the spectra index and value as the start byte offset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cleaned</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">qa_threshold</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the .spc file, parse the label, and extract the spectra</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        input_data : string</span>
+<span class="sd">                     The PATH to the input .spc file</span>
+
+<span class="sd">        label : string</span>
+<span class="sd">                The PATH to an optional detached label associated with the .spc</span>
+
+<span class="sd">        cleaned : boolean</span>
+<span class="sd">                  If True, mask the data based on the QA array.</span>
+
+<span class="sd">        nspectra : int</span>
+<span class="sd">                   The number of spectra in the given data file</span>
+
+<span class="sd">        qa_threshold : int</span>
+<span class="sd">                       The threshold value over which observations are masked as noise</span>
+<span class="sd">                       if cleaned is True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">label_dtype_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;IEEE_REAL&#39;</span><span class="p">:</span><span class="s1">&#39;f&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;MSB_INTEGER&#39;</span><span class="p">:</span><span class="s1">&#39;i&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;MSB_UNSIGNED_INTEGER&#39;</span><span class="p">:</span><span class="s1">&#39;u&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">pvl</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">pvl</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_data</span> <span class="o">=</span> <span class="n">input_data</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">indata</span><span class="p">:</span>
+            <span class="c1"># Extract and handle the ancillary data</span>
+            <span class="n">ancillary_data</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="s2">&quot;ANCILLARY_AND_SUPPLEMENT_DATA&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nspectra</span> <span class="o">=</span> <span class="n">nrows</span> <span class="o">=</span> <span class="n">ancillary_data</span><span class="p">[</span><span class="s1">&#39;ROWS&#39;</span><span class="p">]</span>
+            <span class="n">ncols</span> <span class="o">=</span> <span class="n">ancillary_data</span><span class="p">[</span><span class="s1">&#39;COLUMNS&#39;</span><span class="p">]</span>
+            <span class="n">rowbytes</span> <span class="o">=</span> <span class="n">ancillary_data</span><span class="p">[</span><span class="s1">&#39;ROW_BYTES&#39;</span><span class="p">]</span>
+
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">bytelengths</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">datatypes</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ancillary_data_offset</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="s2">&quot;^ANCILLARY_AND_SUPPLEMENT_DATA&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">ancillary_data_offset</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="s2">&quot;^ANCILLARY_AND_SUPPLEMENT_DATA&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">indata</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">ancillary_data_offset</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ancillary_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;COLUMN&#39;</span><span class="p">:</span>
+                    <span class="n">entry</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="c1"># Level 2B2 PVL has entries with 0 bytes, e.g. omitted.</span>
+                    <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;BYTES&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]))</span>
+                        <span class="n">datatypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label_dtype_map</span><span class="p">[</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;DATA_TYPE&#39;</span><span class="p">]])</span>
+                        <span class="n">bytelengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;BYTES&#39;</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">ncols</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">strbytes</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">bytelengths</span><span class="p">)</span>
+            <span class="n">rowdtype</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">,</span> <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;&gt;&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">datatypes</span><span class="p">,</span> <span class="n">strbytes</span><span class="p">))))</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">indata</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">rowbytes</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">rowdtype</span><span class="p">,</span>
+                              <span class="n">count</span><span class="o">=</span><span class="n">nrows</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ancillary_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+                                               <span class="n">index</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nrows</span><span class="p">))</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">label</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;ANCILLARY_AND_SUPPLEMENT_DATA&quot;</span><span class="p">,</span> <span class="s2">&quot;L2D_RESULT_ARRAY&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;SP_SPECTRUM_QA&quot;</span><span class="p">,</span> <span class="s2">&quot;SP_SPECTRUM_REF1&quot;</span><span class="p">,</span> <span class="s2">&quot;SP_SPECTRUM_RAD&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;SP_SPECTRUM_REF2&quot;</span><span class="p">,</span> <span class="s2">&quot;SP_SPECTRUM_RAW&quot;</span><span class="p">,</span> <span class="s2">&quot;SP_SPECTRUM_WAV&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;^ANCILLARY_AND_SUPPLEMENT_DATA&quot;</span><span class="p">,</span> <span class="s2">&quot;^SP_SPECTRUM_WAV&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;^SP_SPECTRUM_RAW&quot;</span><span class="p">,</span> <span class="s2">&quot;^SP_SPECTRUM_REF2&quot;</span><span class="p">,</span><span class="s2">&quot; ^SP_SPECTRUM_RAD&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;^SP_SPECTRUM_REF1&quot;</span><span class="p">,</span> <span class="s2">&quot;^SP_SPECTRUM_QA&quot;</span><span class="p">,</span> <span class="s2">&quot;^L2D_RESULT_ARRAY&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;^SP_SPECTRUM_RAD&quot;</span><span class="p">]:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">pvl</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">Quantity</span><span class="p">):</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+            <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">vals</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ancillary_data</span><span class="p">)</span>
+            <span class="n">new_anc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ancillary_data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">keys</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ancillary_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ancillary_data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_anc</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">ncols</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">))</span>
+
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">array_offsets</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;WAV&#39;</span><span class="p">,</span> <span class="s1">&#39;RAW&#39;</span><span class="p">,</span> <span class="s1">&#39;REF&#39;</span><span class="p">,</span> <span class="s1">&#39;REF1&#39;</span><span class="p">,</span> <span class="s1">&#39;REF2&#39;</span><span class="p">,</span> <span class="s1">&#39;DAR&#39;</span><span class="p">,</span> <span class="s1">&#39;QA&#39;</span><span class="p">,</span> <span class="s1">&#39;RAD&#39;</span><span class="p">]:</span>
+                <span class="n">search_key</span> <span class="o">=</span> <span class="s1">&#39;^SP_SPECTRUM_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">search_key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">array_offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="n">array_offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="c1"># 2C V3.0</span>
+                    <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;SP_SPECTRUM_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+
+            <span class="n">offsets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">array_offsets</span><span class="p">))</span>
+
+            <span class="n">arrays</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">offsets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">indata</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">offset</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">newk</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+                <span class="n">d</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+                <span class="n">unit</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;UNIT&#39;</span><span class="p">]</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;LINES&#39;</span><span class="p">]</span>
+                <span class="n">scaling_factor</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;SCALING_FACTOR&#39;</span><span class="p">]</span>
+
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">indata</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">lines</span> <span class="o">*</span> <span class="mi">296</span><span class="o">*</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;H&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># If the data is scaled, apply the scaling factor</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scaling_factor</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+                    <span class="n">arr</span> <span class="o">*=</span> <span class="n">scaling_factor</span>
+
+                <span class="n">arrays</span><span class="p">[</span><span class="n">newk</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">arrays</span><span class="p">[</span><span class="s1">&#39;WAV&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrows</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;WAV&#39;</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">cleaned</span><span class="p">:</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;QA&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">qa_threshold</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span>
+            <span class="c1"># If the spectra have been cleaned, the wavelength ids also need to be cleaned.</span>
+            <span class="k">if</span> <span class="n">cleaned</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span><span class="p">[</span><span class="n">mask</span><span class="o">.</span><span class="n">values</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="n">dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spectra</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">nrows</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Spectral_Profiler.open_browse"><a class="viewcode-back" href="../../../library/io/spectral_profiler.html#plio.io.io_spectral_profiler.Spectral_Profiler.open_browse">[docs]</a>    <span class="k">def</span> <span class="nf">open_browse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.jpg&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Attempt to open the browse image corresponding to the spc file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        extension : str</span>
+<span class="sd">                    The file type extension to be added to the base name</span>
+<span class="sd">                    of the spc file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">from</span> <span class="nn">plio.io.io_gdal</span> <span class="kn">import</span> <span class="n">GeoDataset</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">browse</span> <span class="o">=</span> <span class="n">GeoDataset</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">extension</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

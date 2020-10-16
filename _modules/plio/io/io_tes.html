@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>plio.io.io_tes &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" >
+    <link rel="search" title="Search" href="../../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../../index.html" >
+    <link rel="up" title="Module code" href="../../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../../index.html" accesskey="U">Module code</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <h1>Source code for plio.io.io_tes</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pvl</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">plio.io.io_json</span> <span class="kn">import</span> <span class="n">read_json</span>
+<span class="kn">from</span> <span class="nn">plio.utils._tes2numpy</span> <span class="kn">import</span> <span class="n">tes_dtype_map</span>
+<span class="kn">from</span> <span class="nn">plio.utils._tes2numpy</span> <span class="kn">import</span> <span class="n">tes_columns</span>
+<span class="kn">from</span> <span class="nn">plio.utils._tes2numpy</span> <span class="kn">import</span> <span class="n">tes_scaling_factors</span>
+
+<div class="viewcode-block" id="Tes"><a class="viewcode-back" href="../../../library/io/tes.html#plio.io.io_tes.Tes">[docs]</a><span class="k">class</span> <span class="nc">Tes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    spectra : panel</span>
+<span class="sd">              A pandas panel containing n individual spectra.</span>
+
+<span class="sd">    ancillary_data : dataframe</span>
+<span class="sd">                     A pandas DataFrame of the parsed ancillary data (PVL label)</span>
+
+<span class="sd">    label : object</span>
+<span class="sd">            The raw PVL label object</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">var_file</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">data_set</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the .spc file, parse the label, and extract the spectra</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        input_data : string</span>
+<span class="sd">                     The PATH to the input .tab file</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">expand_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">expand_column</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">expand_column</span><span class="p">]</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+            <span class="n">new_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">new_df</span><span class="p">[</span><span class="n">expand_column</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">new_df</span>
+
+        <span class="k">def</span> <span class="nf">bolquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">bit2bool</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;BOLOMETRIC_INERTIA_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;BOLOMETER_LAMP_ANOMALY&#39;</span><span class="p">,</span> <span class="s1">&#39;bool_&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">obsquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">6</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">7</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">8</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">9</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;HGA_MOTION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SOLAR_PANEL_MOTION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ALGOR_PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;IMC_PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;MOMENTUM_DESATURATION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;EQUALIZATION_TABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">obsclass2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">7</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">11</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">11</span><span class="p">:</span><span class="mi">13</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">13</span><span class="p">:</span><span class="mi">14</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">14</span><span class="p">:</span><span class="mi">16</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">16</span><span class="p">:]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;MISSION_PHASE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;INTENDED_TARGET&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;TES_SEQUENCE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;NEON_LAMP_STATUS&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;TIMING_ACCURACY&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SPARE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;CLASSIFICATION_VALUE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u2&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">radquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">7</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">8</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">9</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;MAJOR_PHASE_INVERSION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ALGOR_RISK&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;CALIBRATION_FAILURE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;CALIBRATION_QUALITY&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SPECTROMETER_NOISE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SPECTRAL_INERTIA_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;DETECTOR_MASK_PROBLEM&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">atmquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;TEMPERATURE_PROFILE_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ATMOSPHERIC_OPACITY_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">expand_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">expand_column</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="k">for</span> <span class="n">tup</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">expand_column</span><span class="p">]</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+            <span class="n">new_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">new_df</span><span class="p">[</span><span class="n">expand_column</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">new_df</span>
+
+        <span class="k">def</span> <span class="nf">bolquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">bit2bool</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;BOLOMETRIC_INERTIA_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;BOLOMETER_LAMP_ANOMALY&#39;</span><span class="p">,</span> <span class="s1">&#39;bool_&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">obsquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">6</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">7</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">8</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">9</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;HGA_MOTION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SOLAR_PANEL_MOTION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ALGOR_PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;IMC_PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;MOMENTUM_DESATURATION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;EQUALIZATION_TABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">obsclass2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">7</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">11</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">11</span><span class="p">:</span><span class="mi">13</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">13</span><span class="p">:</span><span class="mi">14</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">14</span><span class="p">:</span><span class="mi">16</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">16</span><span class="p">:]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;MISSION_PHASE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;INTENDED_TARGET&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;TES_SEQUENCE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;NEON_LAMP_STATUS&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;TIMING_ACCURACY&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SPARE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;CLASSIFICATION_VALUE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u2&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">radquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">7</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">8</span><span class="p">]),</span>
+                    <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">9</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;MAJOR_PHASE_INVERSION&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ALGOR_RISK&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;CALIBRATION_FAILURE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;CALIBRATION_QUALITY&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SPECTROMETER_NOISE&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SPECTRAL_INERTIA_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s1">&#39;DETECTOR_MASK_PROBLEM&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">atmquality2arr</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">bitarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+            <span class="n">lis</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">bitarr2int</span><span class="p">(</span><span class="n">bitarr</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]))]</span>
+
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;TEMPERATURE_PROFILE_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ATMOSPHERIC_OPACITY_RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;u1&#39;</span><span class="p">)]</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="k">def</span> <span class="nf">bitarr2int</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">bit2bool</span><span class="p">(</span><span class="n">bit</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">expand_bitstrings</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">if</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s1">&#39;BOL&#39;</span><span class="p">:</span>
+                <span class="n">quality_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ti_bol_rating&#39;</span><span class="p">,</span> <span class="s1">&#39;bol_ref_lamp&#39;</span><span class="p">]</span>
+                <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">bolquality2arr</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">expand_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;quality&#39;</span><span class="p">,</span> <span class="n">quality_columns</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s1">&#39;OBS&#39;</span><span class="p">:</span>
+                <span class="n">quality_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;hga_motion&#39;</span><span class="p">,</span> <span class="s1">&#39;pnl_motion&#39;</span><span class="p">,</span> <span class="s1">&#39;algor_patch&#39;</span><span class="p">,</span> <span class="s1">&#39;imc_patch&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;momentum&#39;</span><span class="p">,</span> <span class="s1">&#39;equal_tab&#39;</span><span class="p">]</span>
+                <span class="n">class_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;phase&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;sequence&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;lamp_status&#39;</span><span class="p">,</span> <span class="s1">&#39;timing&#39;</span><span class="p">,</span> <span class="s1">&#39;spare&#39;</span><span class="p">,</span> <span class="s1">&#39;class_value&#39;</span><span class="p">]</span>
+
+                <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">obsquality2arr</span><span class="p">)</span>
+                <span class="n">df</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">obsclass2arr</span><span class="p">)</span>
+
+                <span class="n">new_df</span> <span class="o">=</span> <span class="n">expand_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;quality&#39;</span><span class="p">,</span> <span class="n">quality_columns</span><span class="p">)</span>
+                <span class="n">new_df</span> <span class="o">=</span> <span class="n">expand_column</span><span class="p">(</span><span class="n">new_df</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="n">class_columns</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">new_df</span>
+
+            <span class="k">elif</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s1">&#39;RAD&#39;</span><span class="p">:</span>
+                <span class="n">quality_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;phase_inversion&#39;</span><span class="p">,</span> <span class="s1">&#39;algor_risk&#39;</span><span class="p">,</span> <span class="s1">&#39;calib_fail&#39;</span><span class="p">,</span> <span class="s1">&#39;calib_quality&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;spect_noise&#39;</span><span class="p">,</span> <span class="s1">&#39;ti_spc_rating&#39;</span><span class="p">,</span> <span class="s1">&#39;det_mask_problem&#39;</span><span class="p">]</span>
+
+                <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">radquality2arr</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">expand_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;quality&#39;</span><span class="p">,</span> <span class="n">quality_columns</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s1">&#39;ATM&#39;</span><span class="p">:</span>
+                <span class="n">quality_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;atm_pt_rating&#39;</span><span class="p">,</span> <span class="s1">&#39;atm_opacity_rating&#39;</span><span class="p">]</span>
+
+                <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">atmquality2arr</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">expand_column</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;quality&#39;</span><span class="p">,</span> <span class="n">quality_columns</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">df</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">data_set</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tes_columns</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">tes_columns</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">=</span><span class="n">data_set</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">input_data</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">pvl</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+        <span class="n">nrecords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;TABLE&#39;</span><span class="p">][</span><span class="s1">&#39;ROWS&#39;</span><span class="p">]</span>
+        <span class="n">nbytes_per_rec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;RECORD_BYTES&#39;</span><span class="p">]</span>
+        <span class="n">data_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;LABEL_RECORDS&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;RECORD_BYTES&#39;</span><span class="p">]</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">[</span><span class="s1">&#39;TABLE&#39;</span><span class="p">][</span><span class="s1">&#39;^STRUCTURE&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+
+        <span class="n">numpy_dtypes</span> <span class="o">=</span> <span class="n">tes_dtype_map</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">tes_columns</span>
+        <span class="n">scaling_factors</span> <span class="o">=</span> <span class="n">tes_scaling_factors</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">data_start</span><span class="p">)</span>
+            <span class="n">buffer</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">nrecords</span><span class="o">*</span><span class="n">nbytes_per_rec</span><span class="p">)</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy_dtypes</span><span class="p">[</span><span class="n">dataset</span><span class="o">.</span><span class="n">upper</span><span class="p">()])</span><span class="o">.</span><span class="n">byteswap</span><span class="p">()</span><span class="o">.</span><span class="n">newbyteorder</span><span class="p">()</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">array</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">[</span><span class="n">dataset</span><span class="o">.</span><span class="n">upper</span><span class="p">()])</span>
+
+        <span class="c1"># Read Radiance array if applicable</span>
+        <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;RAD&#39;</span><span class="p">:</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">var_file</span><span class="p">:</span>
+                <span class="n">filename</span><span class="p">,</span> <span class="n">file_extension</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+                <span class="n">var_file</span> <span class="o">=</span> <span class="n">filename</span> <span class="o">+</span> <span class="s2">&quot;.var&quot;</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">var_file</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">var</span><span class="p">:</span>
+                <span class="n">buffer</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="k">def</span> <span class="nf">process_rad</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">None</span>
+
+                    <span class="n">length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">[</span><span class="n">index</span><span class="p">:</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;u2&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">:</span><span class="n">index</span><span class="o">+</span><span class="mi">4</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">scale</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span><span class="o">-</span><span class="mi">15</span><span class="p">)</span>
+                    <span class="n">radarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">4</span><span class="p">:</span><span class="n">index</span><span class="o">+</span><span class="mi">4</span><span class="o">+</span><span class="n">length</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">[</span><span class="n">index</span><span class="o">+</span><span class="mi">4</span><span class="o">+</span><span class="n">length</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">index</span><span class="o">+</span><span class="mi">4</span><span class="o">+</span><span class="n">length</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;u2&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">length</span><span class="p">:</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Last element did not match the length for file index </span><span class="si">{}</span><span class="s2"> in file </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="n">radarr</span>
+
+                <span class="n">df</span><span class="p">[</span><span class="s2">&quot;raw_rad&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;raw_rad&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_rad</span><span class="p">)</span>
+                <span class="n">df</span><span class="p">[</span><span class="s2">&quot;cal_rad&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;cal_rad&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process_rad</span><span class="p">)</span>
+
+        <span class="c1"># Apply scaling factors</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">scaling_factors</span><span class="p">[</span><span class="n">dataset</span><span class="p">]:</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                 <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scaling_factors</span><span class="p">[</span><span class="n">dataset</span><span class="p">][</span><span class="n">column</span><span class="p">])</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span>  <span class="n">expand_bitstrings</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span>  <span class="n">df</span>
+
+<div class="viewcode-block" id="Tes.join"><a class="viewcode-back" href="../../../library/io/tes.html#plio.io.io_tes.Tes.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="n">tes_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a list of Tes objects, merges them into a single dataframe using</span>
+<span class="sd">        SPACECRAFT_CLOCK_START_COUNT (sclk_time) as the index.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        tes_data : iterable</span>
+<span class="sd">                   A Python iterable of Tes objects</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        : dataframe</span>
+<span class="sd">          A pandas dataframe containing the merged data</span>
+
+<span class="sd">        : outliers</span>
+<span class="sd">          A list of Tes() objects containing the tables containing no matches</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tes_data</span><span class="p">,</span> <span class="s1">&#39;__iter__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tes_data</span><span class="p">,</span> <span class="n">Tes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input data must be a Tes datasets or an iterable of Tes datasets, got </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">tes_data</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tes_data</span><span class="p">,</span> <span class="s1">&#39;__iter__&#39;</span><span class="p">):</span>
+            <span class="n">tes_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">tes_data</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tes_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Input iterable is empty&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Tes</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">tes_data</span><span class="p">]):</span>
+            <span class="c1"># Get the list of types and the indices of elements that caused the error</span>
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">tes_data</span><span class="p">]</span>
+            <span class="n">error_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Tes</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">tes_data</span><span class="p">])</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="kc">False</span><span class="p">]</span>
+
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input data must must be a Tes dataset, input array has non Tes objects at indices: </span><span class="si">{}</span><span class="se">\</span>
+<span class="s2">                             for inputs of type: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">error_idx</span><span class="p">,</span> <span class="n">types</span><span class="p">))</span>
+
+        <span class="n">single_key_sets</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ATM&#39;</span><span class="p">,</span> <span class="s1">&#39;POS&#39;</span><span class="p">,</span> <span class="s1">&#39;TLM&#39;</span><span class="p">,</span> <span class="s1">&#39;OBS&#39;</span><span class="p">}</span>
+        <span class="n">compound_key_sets</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;BOL&#39;</span><span class="p">,</span> <span class="s1">&#39;CMP&#39;</span><span class="p">,</span> <span class="s1">&#39;GEO&#39;</span><span class="p">,</span> <span class="s1">&#39;IFG&#39;</span><span class="p">,</span> <span class="s1">&#39;PCT&#39;</span><span class="p">,</span> <span class="s1">&#39;RAD&#39;</span><span class="p">}</span>
+        <span class="n">dfs</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">single_key_sets</span> <span class="o">|</span> <span class="n">compound_key_sets</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">())</span>
+
+        <span class="c1"># Organize the data based on datasets</span>
+        <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">tes_data</span><span class="p">:</span>
+            <span class="c1"># Find a way to do this in place?</span>
+            <span class="n">dfs</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">dataset</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfs</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">dataset</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># remove and dataframes that are empty</span>
+        <span class="n">empty_dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dfs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">dfs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">empty</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">empty_dfs</span><span class="p">:</span>
+            <span class="n">dfs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+
+        <span class="n">single_key_dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">dfs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dfs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">single_key_sets</span><span class="p">]</span>
+        <span class="n">compound_key_dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">dfs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dfs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">compound_key_sets</span><span class="p">]</span>
+        <span class="n">all_dfs</span> <span class="o">=</span> <span class="n">single_key_dfs</span><span class="o">+</span><span class="n">compound_key_dfs</span>
+
+        <span class="n">keyspace</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">left</span><span class="p">,</span><span class="n">right</span><span class="p">:</span> <span class="n">left</span><span class="o">|</span><span class="n">right</span><span class="p">,</span> <span class="p">[</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;sclk_time&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">all_dfs</span><span class="p">])</span>
+
+        <span class="n">single_key_merged</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">left</span><span class="p">,</span><span class="n">right</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sclk_time&quot;</span><span class="p">]),</span> <span class="n">single_key_dfs</span><span class="p">)</span>
+        <span class="n">compound_key_merged</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">left</span><span class="p">,</span><span class="n">right</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sclk_time&quot;</span><span class="p">,</span> <span class="s2">&quot;detector&quot;</span><span class="p">]),</span> <span class="n">compound_key_dfs</span><span class="p">)</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="n">single_key_merged</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">compound_key_merged</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;sclk_time&quot;</span><span class="p">)</span>
+
+        <span class="n">outlier_idx</span> <span class="o">=</span> <span class="n">keyspace</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">merged</span><span class="p">[</span><span class="s2">&quot;sclk_time&quot;</span><span class="p">])</span>
+        <span class="n">outliers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Tes</span><span class="p">(</span><span class="n">tds</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">tds</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;sclk_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">outlier_idx</span><span class="p">)],</span> <span class="n">data_set</span><span class="o">=</span><span class="n">tds</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="k">for</span> <span class="n">tds</span> <span class="ow">in</span> <span class="n">tes_data</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">merged</span><span class="p">,</span> <span class="p">[</span><span class="n">tds</span> <span class="k">for</span> <span class="n">tds</span> <span class="ow">in</span> <span class="n">outliers</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">tds</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>date.julian2season — Conversion from Julian to Mars Season &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../index.html" >
+    <link rel="up" title="Date/Time Utilities" href="../date.html" >
+    <link rel="next" title="Input/Output" href="../io.html" >
+    <link rel="prev" title="date.julian2ls — Conversion from Julian to LsubS" href="julian2ls.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../index.html" >Plio Reference</a></li>
+          <li class="active"><a href="../date.html" accesskey="U">Date/Time Utilities</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="../io.html" title="Input/Output"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="julian2ls.html" title="date.julian2ls — Conversion from Julian to LsubS"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="julian2ls.html"
+                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">date.julian2ls</span></code> — Conversion from Julian to LsubS</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../io.html"
+                        title="next chapter">Input/Output</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/library/date/julian2season.rst.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/library/date/julian2season.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="date-julian2season-conversion-from-julian-to-mars-season">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">date.julian2season</span></code> — Conversion from Julian to Mars Season<a class="headerlink" href="#date-julian2season-conversion-from-julian-to-mars-season" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">date.julian2season</span></code> module provides functionality for the conversion between Julian date and Martian season</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.1.0.</span></p>
+</div>
+<span class="target" id="module-plio.date.julian2season"></span><dl class="py function">
+<dt id="plio.date.julian2season.j2season">
+<code class="sig-prename descclassname">plio.date.julian2season.</code><code class="sig-name descname">j2season</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_date</span></em>, <em class="sig-param"><span class="n">year</span><span class="o">=</span><span class="default_value">686.9799625</span></em>, <em class="sig-param"><span class="n">marsday</span><span class="o">=</span><span class="default_value">8.5875</span></em>, <em class="sig-param"><span class="n">startdate</span><span class="o">=</span><span class="default_value">144.61074994</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/date/julian2season.html#j2season"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.date.julian2season.j2season" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ls date to a KRC season to determine which KRC seasonal lookup tables to use</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>_date</strong> (<em>float</em>) – <p>The input date to be converted</p>
+<dl class="simple">
+<dt>year<span class="classifier">float</span></dt><dd><p>The mars year to search within</p>
+</dd>
+<dt>marsday<span class="classifier">float</span></dt><dd><p>The length of a Mars day</p>
+</dd>
+<dt>startdate<span class="classifier">float</span></dt><dd><p>The zero, start date</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>startseason</strong> (<em>int</em>) – The integer index to the start season</p></li>
+<li><p><strong>stopseasons</strong> (<em>int</em>) – The integer index to the stop season</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

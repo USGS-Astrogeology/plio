@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>Installation &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="Planetary I/O" href="../index.html" >
+    <link rel="up" title="User Guide" href="index.html" >
+    <link rel="next" title="Getting Started with AutoCNet" href="tutorials/index.html" >
+    <link rel="prev" title="User Guide" href="index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../index.html">Plio</a></li>
+	
+          <li class="active"><a href="index.html" accesskey="U">User Guide</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="tutorials/index.html" title="Getting Started with AutoCNet"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="index.html" title="User Guide"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#via-conda">Via Conda</a></li>
+<li><a class="reference internal" href="#via-setup-py">Via setup.py</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">User Guide</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorials/index.html"
+                        title="next chapter">Getting Started with AutoCNet</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../_sources/users/installation.rst.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/users/installation.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>We provide Planetary I/O (plio) as a binary package via conda and for
+installation via the standard setup.py script.</p>
+<div class="section" id="via-conda">
+<h2>Via Conda<a class="headerlink" href="#via-conda" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Download and install the Python 3.x Miniconda installer.  Respond <code class="docutils literal notranslate"><span class="pre">Yes</span></code> when
+prompeted to add conda to your BASH profile.</p></li>
+<li><p>Bring up a command line and add the <code class="docutils literal notranslate"><span class="pre">conda-forge</span></code> channel to your channel
+list: <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">config</span> <span class="pre">--add</span> <span class="pre">channels</span> <span class="pre">conda-forge</span></code>.  This adds an entry to your
+<code class="docutils literal notranslate"><span class="pre">~/.condarc</span></code> file.</p></li>
+<li><p>Install plio: <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">-c</span> <span class="pre">jlaura</span> <span class="pre">plio</span></code></p></li>
+<li><p>To update plio: <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">update</span> <span class="pre">-c</span> <span class="pre">jlaura</span> <span class="pre">plio</span></code></p></li>
+</ol>
+</div>
+<div class="section" id="via-setup-py">
+<h2>Via setup.py<a class="headerlink" href="#via-setup-py" title="Permalink to this headline">¶</a></h2>
+<p>This method assumes that you have the necessary dependencies already
+installed. The installation of dependencies can be non-trivial because of GDAL.
+We supply an <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> file that works with Anaconda Python’s <code class="docutils literal notranslate"><span class="pre">conda</span>
+<span class="pre">env</span></code> environment management tool.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

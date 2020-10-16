@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>io.io_spectral_profiler — Kaguya Spectral Profiler to DataFrame &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../index.html" >
+    <link rel="up" title="Input/Output" href="../io.html" >
+    <link rel="next" title="io.io_tes — Reader for MGS TES Data" href="tes.html" >
+    <link rel="prev" title="Input/Output" href="../io.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../index.html" >Plio Reference</a></li>
+          <li class="active"><a href="../io.html" accesskey="U">Input/Output</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="tes.html" title="io.io_tes — Reader for MGS TES Data"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="../io.html" title="Input/Output"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../io.html"
+                        title="previous chapter">Input/Output</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tes.html"
+                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_tes</span></code> — Reader for MGS TES Data</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/library/io/spectral_profiler.rst.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/library/io/spectral_profiler.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="io-io-spectral-profiler-kaguya-spectral-profiler-to-dataframe">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.io_spectral_profiler</span></code> — Kaguya Spectral Profiler to DataFrame<a class="headerlink" href="#io-io-spectral-profiler-kaguya-spectral-profiler-to-dataframe" title="Permalink to this headline">¶</a></h1>
+<p>The :mod:<a href="#id1"><span class="problematic" id="id2">`</span></a>io.io_spectral_profiler`module supports reading Kaguya SP data into
+a Pandas DataFrame.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.1.0.</span></p>
+</div>
+<span class="target" id="module-plio.io.io_spectral_profiler"></span><dl class="py class">
+<dt id="plio.io.io_spectral_profiler.Spectral_Profiler">
+<em class="property">class </em><code class="sig-prename descclassname">plio.io.io_spectral_profiler.</code><code class="sig-name descname">Spectral_Profiler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_data</span></em>, <em class="sig-param"><span class="n">label</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cleaned</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">qa_threshold</span><span class="o">=</span><span class="default_value">2000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_spectral_profiler.html#Spectral_Profiler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_spectral_profiler.Spectral_Profiler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="plio.io.io_spectral_profiler.Spectral_Profiler.spectra">
+<code class="sig-name descname">spectra</code><a class="headerlink" href="#plio.io.io_spectral_profiler.Spectral_Profiler.spectra" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pandas panel containing n individual spectra.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>panel</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_spectral_profiler.Spectral_Profiler.ancillary_data">
+<code class="sig-name descname">ancillary_data</code><a class="headerlink" href="#plio.io.io_spectral_profiler.Spectral_Profiler.ancillary_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pandas DataFrame of the parsed ancillary data (PVL label)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_spectral_profiler.Spectral_Profiler.label">
+<code class="sig-name descname">label</code><a class="headerlink" href="#plio.io.io_spectral_profiler.Spectral_Profiler.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>The raw PVL label object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="plio.io.io_spectral_profiler.Spectral_Profiler.offsets">
+<code class="sig-name descname">offsets</code><a class="headerlink" href="#plio.io.io_spectral_profiler.Spectral_Profiler.offsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>with key as the spectra index and value as the start byte offset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plio.io.io_spectral_profiler.Spectral_Profiler.open_browse">
+<code class="sig-name descname">open_browse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extension</span><span class="o">=</span><span class="default_value">'.jpg'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/io/io_spectral_profiler.html#Spectral_Profiler.open_browse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.io.io_spectral_profiler.Spectral_Profiler.open_browse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to open the browse image corresponding to the spc file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>extension</strong> (<em>str</em>) – The file type extension to be added to the base name
+of the spc file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

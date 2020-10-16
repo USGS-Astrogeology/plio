@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>utils.utils — Utilities &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../index.html" >
+    <link rel="up" title="Generic Utilities" href="../utils.html" >
+    <link rel="next" title="utils.log — Wrapper for setting up a user defined logger" href="log.html" >
+    <link rel="prev" title="Generic Utilities" href="../utils.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../index.html" >Plio Reference</a></li>
+          <li class="active"><a href="../utils.html" accesskey="U">Generic Utilities</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="log.html" title="utils.log — Wrapper for setting up a user defined logger"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="../utils.html" title="Generic Utilities"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../utils.html"
+                        title="previous chapter">Generic Utilities</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="log.html"
+                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">utils.log</span></code> — Wrapper for setting up a user defined logger</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/library/utils/utils.rst.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/library/utils/utils.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="utils-utils-utilities">
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">utils.utils</span></code> — Utilities<a class="headerlink" href="#utils-utils-utilities" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">utils.utils</span></code> module provides generic I/O utilities
+.. versionadded:: 0.1.0</p>
+<span class="target" id="module-plio.utils.utils"></span><dl class="py function">
+<dt id="plio.utils.utils.convert_string_to_float">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">convert_string_to_float</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#convert_string_to_float"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.convert_string_to_float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to convert a string to a float.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>str</em>) – The string to convert</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>If successful, the converted value, else the argument is passed back
+out.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float / str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.create_dir">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">create_dir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">basedir</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#create_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.create_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a unique, temporary directory in /tmp where processing will occur</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>basedir</strong> (<em>str</em>) – The PATH to create the temporary directory in.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.delete_dir">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">delete_dir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dir</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#delete_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.delete_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dir</strong> (<em>str</em>) – Remove a directory</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.file_search">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">file_search</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">searchdir</span></em>, <em class="sig-param"><span class="n">searchstring</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#file_search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.file_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively search for files in the specified directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>searchdir</strong> (<em>str</em>) – The directory to be searched</p></li>
+<li><p><strong>searchstring</strong> (<em>str</em>) – The string to be searched for</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>filelist</strong> – of files</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.find_in_dict">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">find_in_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#find_in_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.find_in_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively find an entry in a dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>dict</em>) – The dictionary to search</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – The key to find in the dictionary</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>item</strong> – The value from the dictionary</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.find_nested_in_dict">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">find_nested_in_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">key_list</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#find_nested_in_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.find_nested_in_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Traverse a list of keys into a dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>dict</em>) – The dictionary to be traversed</p></li>
+<li><p><strong>key_list</strong> (<em>list</em>) – The list of keys to be travered.  Keys are
+traversed in the order they are entered in
+the list</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>value</strong> – The value in the dict</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.is_number">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">is_number</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#is_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.is_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if an argument is convertable to a number</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>object</em>) – The argument to check for conversion</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if conversion is possible, otherwise False.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.split_all_ext">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">split_all_ext</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#split_all_ext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.split_all_ext" title="Permalink to this definition">¶</a></dt>
+<dd><p>General function for removeing all potential extensions from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path or file name with potential extension</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>base</strong> – Path or file name with all potnetial extensions removed</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="plio.utils.utils.xstr">
+<code class="sig-prename descclassname">plio.utils.utils.</code><code class="sig-name descname">xstr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/plio/utils/utils.html#xstr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plio.utils.utils.xstr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an empty string if the input is a NoneType.  Otherwise
+cast to string and return</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>obj</em>) – An input object castable to a string</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The input object cast to a string</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

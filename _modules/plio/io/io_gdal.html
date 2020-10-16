@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>plio.io.io_gdal &mdash; Planetary I/O</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     'Please install this project with setup.py',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" >
+    <link rel="search" title="Search" href="../../../search.html" >
+    <link rel="top" title="Planetary I/O" href="../../../index.html" >
+    <link rel="up" title="Module code" href="../../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../../index.html">Plio</a></li>
+	
+          <li class="active"><a href="../../index.html" accesskey="U">Module code</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+
+        </div>
+      </div>
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <h1>Source code for plio.io.io_gdal</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">affine</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pvl</span>
+
+
+<span class="kn">from</span> <span class="nn">plio.io</span> <span class="kn">import</span> <span class="n">extract_metadata</span><span class="p">,</span> <span class="n">conditional_gdal</span>
+<span class="kn">from</span> <span class="nn">plio.geofuncs</span> <span class="kn">import</span> <span class="n">geofuncs</span>
+<span class="kn">from</span> <span class="nn">plio.utils.utils</span> <span class="kn">import</span> <span class="n">find_in_dict</span>
+<span class="kn">from</span> <span class="nn">plio.io</span> <span class="kn">import</span> <span class="n">gdal</span><span class="p">,</span> <span class="n">ogr</span><span class="p">,</span> <span class="n">osr</span>
+
+<span class="n">NP2GDAL_CONVERSION</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;byte&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;uint8&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;int8&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;uint16&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+  <span class="s2">&quot;int16&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+  <span class="s2">&quot;uint32&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="s2">&quot;int32&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="s2">&quot;float32&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+  <span class="s2">&quot;float64&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+  <span class="s2">&quot;complex64&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+  <span class="s2">&quot;complex128&quot;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">GDAL2NP_CONVERSION</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">NP2GDAL_CONVERSION</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="n">DEFAULT_PROJECTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mars&#39;</span><span class="p">:</span><span class="s1">&#39;GEOGCS[&quot;Mars 2000&quot;,DATUM[&quot;D_Mars_2000&quot;,SPHEROID[&quot;Mars_2000_IAU_IAG&quot;,3396190.0,169.89444722361179]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;Decimal_Degree&quot;,0.0174532925199433]]&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;moon&#39;</span><span class="p">:</span><span class="s1">&#39;GEOGCS[&quot;Moon 2000&quot;,DATUM[&quot;D_Moon_2000&quot;,SPHEROID[&quot;Moon_2000_IAU_IAG&quot;,1737400.0,0.0]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;Decimal_Degree&quot;,0.0174532925199433]]&#39;</span><span class="p">}</span>
+<span class="n">DEFAULT_RADII</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mars&#39;</span><span class="p">:</span> <span class="mf">3396190.0</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="GeoDataset"><a class="viewcode-back" href="../../../library/io/gdal.html#plio.io.io_gdal.GeoDataset">[docs]</a><span class="k">class</span> <span class="nc">GeoDataset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Geospatial dataset object that represents.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    file_name : str</span>
+<span class="sd">                The name of the input image, including its full path.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    base_name : str</span>
+<span class="sd">                The base name of the input image, extracted from the full path.</span>
+
+<span class="sd">    bounding_box : object</span>
+<span class="sd">                 The bounding box of the image in lat/lon space</span>
+
+<span class="sd">    geotransform : object</span>
+<span class="sd">                   Geotransform reference OGR object as an array of size 6 containing the affine</span>
+<span class="sd">                   transformation coefficients for transforming from raw sample/line to projected x/y.</span>
+<span class="sd">                   xproj = geotransform[0] + sample * geotransform[1] + line * geotransform[2]</span>
+<span class="sd">                   yproj = geotransform[3] + sample * geotransform[4] + line * geotransform[5]</span>
+
+<span class="sd">    geospatial_coordinate_system : object</span>
+<span class="sd">                                   Geospatial coordinate system OSR object.</span>
+
+<span class="sd">    latlon_extent : list</span>
+<span class="sd">                    of two tuples containing the latitide/longitude boundaries.</span>
+<span class="sd">                    This list is in the form [(lowerlat, lowerlon), (upperlat, upperlon)].</span>
+
+<span class="sd">    pixel_width : float</span>
+<span class="sd">                  The width of the image pixels (i.e. displacement in the x-direction).</span>
+<span class="sd">                  Note: This is the second value geotransform array.</span>
+
+<span class="sd">    pixel_height : float</span>
+<span class="sd">                   The height of the image pixels (i.e. displacement in the y-direction).</span>
+<span class="sd">                   Note: This is the sixth (last) value geotransform array.</span>
+
+<span class="sd">    spatial_reference : object</span>
+<span class="sd">                        Spatial reference system OSR object.</span>
+
+<span class="sd">    standard_parallels : list</span>
+<span class="sd">                         of the standard parallels used by the map projection found in the metadata</span>
+<span class="sd">                         using the spatial reference for this GeoDataset.</span>
+
+<span class="sd">    unit_type : str</span>
+<span class="sd">                Name of the unit used by the raster, e.g. &#39;m&#39; or &#39;ft&#39;.</span>
+
+<span class="sd">    x_rotation : float</span>
+<span class="sd">                The geotransform coefficient that represents the rotation about the x-axis.</span>
+<span class="sd">                Note: This is the third value geotransform array.</span>
+
+<span class="sd">    xy_extent : list</span>
+<span class="sd">                of two tuples containing the sample/line boundaries.</span>
+<span class="sd">                The first value is the upper left corner of the upper left pixel and</span>
+<span class="sd">                the second value is the lower right corner of the lower right pixel.</span>
+<span class="sd">                This list is in the form [(minx, miny), (maxx, maxy)].</span>
+
+<span class="sd">    xy_corners : list</span>
+<span class="sd">                 of tuple corner coordinates in the form:</span>
+<span class="sd">                 [upper left, lower left, lower right, upper right]</span>
+
+<span class="sd">    y_rotation : float</span>
+<span class="sd">                 The geotransform coefficient that represents the rotation about the y-axis.</span>
+<span class="sd">                 Note: This is the fifth value geotransform array.</span>
+
+<span class="sd">    coordinate_transformation : object</span>
+<span class="sd">                                The coordinate transformation from the spatial reference system to</span>
+<span class="sd">                                the geospatial coordinate system.</span>
+
+<span class="sd">    inverse_coordinate_transformation : object</span>
+<span class="sd">                                        The coordinate transformation from the geospatial</span>
+<span class="sd">                                        coordinate system to the spatial reference system.</span>
+
+<span class="sd">    scale : tuple</span>
+<span class="sd">            The name and value of the linear projection units of the spatial reference system.</span>
+<span class="sd">            This tuple is of type string/float of the form (unit name, value).</span>
+<span class="sd">            To transform a linear distance to meters, multiply by this value.</span>
+<span class="sd">            If no units are available (&quot;Meters&quot;, 1) will be returned.</span>
+
+<span class="sd">    spheroid : tuple</span>
+<span class="sd">               The spheroid found in the metadata using the spatial reference system.</span>
+<span class="sd">               This is of the form (semi-major, semi-minor, inverse flattening).</span>
+
+<span class="sd">    raster_size : tuple</span>
+<span class="sd">                  The dimensions of the raster, i.e. (number of samples, number of lines).</span>
+
+<span class="sd">    central_meridian : float</span>
+<span class="sd">                       The central meridian of the map projection from the metadata.</span>
+
+<span class="sd">    no_data_value : float</span>
+<span class="sd">                    Special value used to indicate pixels that are not valid.</span>
+
+<span class="sd">    metadata : dict</span>
+<span class="sd">               A dictionary of available image metadata</span>
+
+<span class="sd">    footprint : object</span>
+<span class="sd">                An OGR footprint object</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialization method to set the file name and open the file using GDAL.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file_name : str</span>
+<span class="sd">                   The file name to set and open.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_name</span> <span class="o">=</span> <span class="n">file_name</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdal</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;No module name gdal.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;File not found :&#39;</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">,)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">base_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_base_name&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">geotransform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Where the array is in the form:</span>
+<span class="sd">        [top left x, w-e pixel resolution, x-rotation,</span>
+<span class="sd">        top left y, y-rotation, n-s pixel resolution]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_geotransform&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_geotransform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">footprint</span><span class="o">.</span><span class="n">ExportToJson</span><span class="p">())[</span><span class="s1">&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">ul</span><span class="p">,</span> <span class="n">ur</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">ll</span> <span class="o">=</span> <span class="n">geofuncs</span><span class="o">.</span><span class="n">find_four_corners</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+
+                <span class="n">xsize</span><span class="p">,</span> <span class="n">ysize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raster_size</span>
+                <span class="n">xstart</span> <span class="o">=</span> <span class="n">ul</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">xscale</span> <span class="o">=</span> <span class="p">(</span><span class="n">ur</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">xstart</span><span class="p">)</span> <span class="o">/</span> <span class="n">xsize</span>
+                <span class="n">xskew</span> <span class="o">=</span> <span class="p">(</span><span class="n">ll</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">xstart</span><span class="p">)</span> <span class="o">/</span> <span class="n">ysize</span>
+                <span class="n">ystart</span> <span class="o">=</span> <span class="n">ul</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">yskew</span> <span class="o">=</span> <span class="p">(</span><span class="n">ur</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ystart</span><span class="p">)</span> <span class="o">/</span> <span class="n">xsize</span>
+                <span class="n">yscale</span> <span class="o">=</span> <span class="p">(</span><span class="n">ll</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ystart</span><span class="p">)</span> <span class="o">/</span> <span class="n">ysize</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_geotransform</span> <span class="o">=</span> <span class="p">[</span><span class="n">xstart</span><span class="p">,</span> <span class="n">xscale</span><span class="p">,</span> <span class="n">xskew</span><span class="p">,</span> <span class="n">ystart</span><span class="p">,</span> <span class="n">yskew</span><span class="p">,</span> <span class="n">yscale</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geotransform</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">forward_affine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fa</span> <span class="o">=</span> <span class="n">affine</span><span class="o">.</span><span class="n">Affine</span><span class="o">.</span><span class="n">from_gdal</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">geotransform</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fa</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inverse_affine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># If det(A) == 0, the transformation is degenerate</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_affine</span><span class="o">.</span><span class="n">is_degenerate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ia</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">forward_affine</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ia</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">standard_parallels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_standard_parallels&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_standard_parallels</span> <span class="o">=</span> <span class="n">extract_metadata</span><span class="o">.</span><span class="n">get_standard_parallels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standard_parallels</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unit_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_unit_type&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unit_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">GetUnitType</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unit_type</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">north_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geofuncs</span><span class="o">.</span><span class="n">is_clockwise</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">footprint</span><span class="o">.</span><span class="n">ExportToJson</span><span class="p">())[</span><span class="s1">&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">spatial_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_srs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+            <span class="n">proj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">proj</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span><span class="o">.</span><span class="n">ImportFromWkt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="s1">&#39;TargetName&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span><span class="o">.</span><span class="n">ImportFromWkt</span><span class="p">(</span><span class="n">DEFAULT_PROJECTIONS</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">lower</span><span class="p">()])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span><span class="o">.</span><span class="n">MorphToESRI</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span><span class="o">.</span><span class="n">MorphFromESRI</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span> <span class="k">pass</span> <span class="c1">#pragma: no cover</span>
+
+            <span class="c1">#Setup the GCS</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span><span class="o">.</span><span class="n">CloneGeogCS</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_srs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nbands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_nbands&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nbands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterCount</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nbands</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">geospatial_coordinate_system</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_gcs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="o">.</span><span class="n">CloneGeogCS</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gcs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_metadata&#39;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">pvl</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetMetadata</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">footprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_footprint&#39;</span><span class="p">):</span>
+            <span class="c1"># Try to get the footprint from the image</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">polygon_pvl</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="s1">&#39;Polygon&#39;</span><span class="p">)</span>
+                <span class="n">start_polygon_byte</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="n">polygon_pvl</span><span class="p">,</span> <span class="s1">&#39;StartByte&#39;</span><span class="p">)</span>
+                <span class="n">num_polygon_bytes</span> <span class="o">=</span> <span class="n">find_in_dict</span><span class="p">(</span><span class="n">polygon_pvl</span><span class="p">,</span> <span class="s1">&#39;Bytes&#39;</span><span class="p">)</span>
+
+                <span class="c1"># I too dislike the additional open here.  Not sure a good option</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">start_polygon_byte</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="c1"># Sloppy unicode to string because GDAL pukes on unicode</span>
+                    <span class="n">stream</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">num_polygon_bytes</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_footprint</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">CreateGeometryFromWkt</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_footprint</span> <span class="o">=</span> <span class="kc">None</span>
+
+                <span class="c1"># If the image does not have a footprint, try getting the image from projected</span>
+                <span class="c1"># coordinates</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Get the lat lon corners</span>
+                    <span class="n">lat</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">latlon_corners</span><span class="p">]</span>
+                    <span class="n">lon</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">latlon_corners</span><span class="p">]</span>
+
+                    <span class="c1"># Compute a ogr geometry for the tiff which</span>
+                    <span class="c1"># provides leverage for overlaps</span>
+                    <span class="n">ring</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="n">ogr</span><span class="o">.</span><span class="n">wkbLinearRing</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="p">[</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)]:</span>
+                        <span class="n">ring</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="o">*</span><span class="n">point</span><span class="p">)</span>
+                    <span class="n">ring</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+                    <span class="n">poly</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="n">ogr</span><span class="o">.</span><span class="n">wkbPolygon</span><span class="p">)</span>
+                    <span class="n">poly</span><span class="o">.</span><span class="n">AddGeometry</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span>
+                    <span class="n">poly</span><span class="o">.</span><span class="n">FlattenTo2D</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_footprint</span> <span class="o">=</span> <span class="n">poly</span>
+
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_footprint</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_footprint</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xy_corners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">),</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">),</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">proj_corners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># The corner coordinates in projected space</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">latlon_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_latlon_extent&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint</span><span class="p">:</span>
+                <span class="n">fp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint</span>
+                <span class="c1"># If we have a footprint, do not worry about computing a lat/lon transform</span>
+                <span class="n">minx</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxy</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">GetEnvelope</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_extent</span> <span class="o">=</span> <span class="p">[(</span><span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Attempt to compute a basic bounding box footprint</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_extent</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">xy_extent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy_extent</span>
+                <span class="n">maxlon</span><span class="p">,</span> <span class="n">minlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_to_latlon</span><span class="p">(</span><span class="o">*</span><span class="n">xy_extent</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">minlon</span><span class="p">,</span> <span class="n">maxlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_to_latlon</span><span class="p">(</span><span class="o">*</span><span class="n">xy_extent</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_extent</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">minlat</span><span class="p">,</span> <span class="n">minlon</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_extent</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">maxlat</span><span class="p">,</span> <span class="n">maxlon</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_extent</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">latlon_corners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_latlon_corners&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint</span><span class="p">:</span>
+                <span class="n">fp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint</span>
+
+                <span class="n">minx</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxy</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">GetEnvelope</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_corners</span> <span class="o">=</span> <span class="p">[(</span><span class="n">minx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">),</span>
+                                        <span class="p">(</span><span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">),</span>
+                                        <span class="p">(</span><span class="n">maxx</span><span class="p">,</span> <span class="n">miny</span><span class="p">),</span>
+                                        <span class="p">(</span><span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_corners</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy_corners</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_to_latlon</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_corners</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latlon_corners</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xy_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">)]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">proj_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># The extent in projected space</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pixel_area</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_pixel_area&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">extent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy_extent</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pixel_area</span> <span class="o">=</span> <span class="n">extent</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">extent</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pixel_area</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pixel_width</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_pixel_width&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pixel_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geotransform</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pixel_width</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pixel_height</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_pixel_height&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pixel_height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geotransform</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pixel_height</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">x_rotation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_x_rotation&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geotransform</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x_rotation</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">y_rotation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_y_rotation&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_y_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geotransform</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y_rotation</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">coordinate_transformation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_ct&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ct</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">CoordinateTransformation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">geospatial_coordinate_system</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ct</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inverse_coordinate_transformation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_ict&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ict</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">CoordinateTransformation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">geospatial_coordinate_system</span><span class="p">,</span>
+                                                     <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ict</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">no_data_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_no_data_value&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_no_data_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">GetNoDataValue</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_data_value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_scale&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">unitname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="o">.</span><span class="n">GetLinearUnitsName</span><span class="p">()</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="o">.</span><span class="n">GetLinearUnits</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">unitname</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">spheroid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_spheroid&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_spheroid</span> <span class="o">=</span> <span class="n">extract_metadata</span><span class="o">.</span><span class="n">get_spheroid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spheroid</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">raster_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_raster_size&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_size</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">central_meridian</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_central_meridian&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_central_meridian</span> <span class="o">=</span> <span class="n">extract_metadata</span><span class="o">.</span><span class="n">get_central_meridian</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_central_meridian</span>
+
+<div class="viewcode-block" id="GeoDataset.pixel_to_latlon"><a class="viewcode-back" href="../../../library/io/gdal.html#plio.io.io_gdal.GeoDataset.pixel_to_latlon">[docs]</a>    <span class="k">def</span> <span class="nf">pixel_to_latlon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert from pixel space (i.e. sample/line) to lat/lon space.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : float</span>
+<span class="sd">            x-coordinate to be transformed.</span>
+<span class="sd">        y : float</span>
+<span class="sd">            y-coordinate to be transformed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        lat, lon : tuple</span>
+<span class="sd">                   (Latitude, Longitude) corresponding to the given (x,y).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">lon</span><span class="p">,</span> <span class="n">lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_affine</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinate_transformation</span><span class="o">.</span><span class="n">TransformPoint</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span></div>
+
+<div class="viewcode-block" id="GeoDataset.latlon_to_pixel"><a class="viewcode-back" href="../../../library/io/gdal.html#plio.io.io_gdal.GeoDataset.latlon_to_pixel">[docs]</a>    <span class="k">def</span> <span class="nf">latlon_to_pixel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert from lat/lon space to pixel space (i.e. sample/line).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lat: float</span>
+<span class="sd">             Latitude to be transformed.</span>
+<span class="sd">        lon : float</span>
+<span class="sd">              Longitude to be transformed.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        x, y : tuple</span>
+<span class="sd">               (Sample, line) position corresponding to the given (latitude, longitude).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_coordinate_transformation</span><span class="o">.</span><span class="n">TransformPoint</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+        <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_affine</span> <span class="o">*</span> <span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">px</span><span class="p">,</span> <span class="n">py</span></div>
+
+<div class="viewcode-block" id="GeoDataset.read_array"><a class="viewcode-back" href="../../../library/io/gdal.html#plio.io.io_gdal.GeoDataset.read_array">[docs]</a>    <span class="k">def</span> <span class="nf">read_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pixels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract the required data as a NumPy array</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        band : int</span>
+<span class="sd">               The image band number to be extracted as a NumPy array. Default band=1.</span>
+
+<span class="sd">        pixels : list</span>
+<span class="sd">                 [xstart, ystart, xcount, ycount]. Default pixels=None.</span>
+
+<span class="sd">        dtype : str</span>
+<span class="sd">                The NumPy dtype for the output array. Defaults to the band dtype.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        array : ndarray</span>
+<span class="sd">                The dataset for the specified band.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">band</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">GDAL2NP_CONVERSION</span><span class="p">[</span><span class="n">band</span><span class="o">.</span><span class="n">DataType</span><span class="p">]</span>
+
+        <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pixels</span><span class="p">:</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="c1">#if self.north_up == False:</span>
+            <span class="c1">#    array = np.flipud(array)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Check that the read start is not outside of the image</span>
+            <span class="n">xstart</span><span class="p">,</span> <span class="n">ystart</span><span class="p">,</span> <span class="n">xcount</span><span class="p">,</span> <span class="n">ycount</span> <span class="o">=</span> <span class="n">pixels</span>
+            <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy_extent</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="c1"># If the image is south up, flip the roi</span>
+            <span class="c1">#if self.north_up == False:</span>
+            <span class="c1">#    ystart = ymax - (ystart + ycount)</span>
+            <span class="k">if</span> <span class="n">xstart</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">xstart</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">if</span> <span class="n">ystart</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">ystart</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">if</span> <span class="n">xstart</span> <span class="o">+</span> <span class="n">xcount</span> <span class="o">&gt;</span> <span class="n">xmax</span><span class="p">:</span>
+                <span class="n">xcount</span> <span class="o">=</span> <span class="n">xmax</span> <span class="o">-</span> <span class="n">xstart</span>
+
+            <span class="k">if</span> <span class="n">ystart</span> <span class="o">+</span> <span class="n">ycount</span> <span class="o">&gt;</span> <span class="n">ymax</span><span class="p">:</span>
+                <span class="n">ycount</span> <span class="o">=</span> <span class="n">ymax</span> <span class="o">-</span> <span class="n">ystart</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="n">xstart</span><span class="p">,</span> <span class="n">ystart</span><span class="p">,</span> <span class="n">xcount</span><span class="p">,</span> <span class="n">ycount</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">array</span></div>
+
+    <span class="k">def</span> <span class="nf">compute_overlap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geodata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">geofuncs</span><span class="o">.</span><span class="n">compute_overlap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geodata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="array_to_raster"><a class="viewcode-back" href="../../../library/io/gdal.html#plio.io.io_gdal.array_to_raster">[docs]</a><span class="k">def</span> <span class="nf">array_to_raster</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">geotransform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outformat</span><span class="o">=</span><span class="s1">&#39;GTiff&#39;</span><span class="p">,</span>
+                    <span class="n">ndv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bittype</span><span class="o">=</span><span class="s1">&#39;GDT_Float64&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts the given NumPy array to a raster format using the GeoDataset class.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    array : ndarray</span>
+<span class="sd">            The data to be written via GDAL</span>
+
+<span class="sd">    file_name : str</span>
+<span class="sd">                The output file PATH (relative or absolute)</span>
+
+<span class="sd">    projection : object</span>
+<span class="sd">                 A GDAL readable projection object, WKT string, PROJ4 string, etc.</span>
+<span class="sd">                 Default: None</span>
+
+<span class="sd">    geotransform : object</span>
+<span class="sd">                   A six parameter geotransformation</span>
+<span class="sd">                   Default:None.</span>
+
+<span class="sd">    outformat : str</span>
+<span class="sd">                A GDAL supported output format</span>
+<span class="sd">                Default: &#39;GTiff&#39;.</span>
+
+<span class="sd">    ndv : float</span>
+<span class="sd">          The no data value for the given band.</span>
+<span class="sd">          Default: None.</span>
+
+<span class="sd">    bittype : str</span>
+<span class="sd">              A GDAL supported bittype, e.g. GDT_Int32</span>
+<span class="sd">              Default: GDT_Float64</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">gdal</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;No module named gdal.&#39;</span><span class="p">)</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="n">outformat</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">bands</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">single</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">bands</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">single</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">bands</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">gdal</span><span class="p">,</span> <span class="n">bittype</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">geotransform</span><span class="p">:</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">geotransform</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">projection</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">projection</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">projection</span><span class="o">.</span><span class="n">ExportToWkt</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">single</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">bnd</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ndv</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bnd</span><span class="o">.</span><span class="n">SetNoDataValue</span><span class="p">(</span><span class="n">ndv</span><span class="p">)</span>
+        <span class="n">bnd</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bands</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">bnd</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ndv</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bnd</span><span class="o">.</span><span class="n">SetNoDataValue</span><span class="p">(</span><span class="n">ndv</span><span class="p">)</span>
+            <span class="n">bnd</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">array</span><span class="p">[:,:,</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span></div>
+
+<span class="nd">@conditional_gdal</span>
+<span class="k">def</span> <span class="nf">match_rasters</span><span class="p">(</span><span class="n">match_to</span><span class="p">,</span> <span class="n">match_from</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span>
+                  <span class="n">resampling_method</span><span class="o">=</span><span class="s1">&#39;GRA_Bilinear&#39;</span><span class="p">,</span> <span class="n">ndv</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Match a source raster to a match raster, including resolution and extent.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ==========</span>
+<span class="sd">    match_to : object</span>
+<span class="sd">               A GeoDataSet object to be matched to</span>
+
+<span class="sd">    match_from : object</span>
+<span class="sd">                 A GeoDataSet object to be clipped</span>
+
+<span class="sd">    destination : str</span>
+<span class="sd">                  PATH where the output will be written</span>
+
+<span class="sd">    resampling_method : str</span>
+<span class="sd">                        Resampling method to use.  Options include:</span>
+<span class="sd">                        {GRA_NearestNeighbor, GRA_Bilinear (Default),</span>
+<span class="sd">                        GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average,</span>
+<span class="sd">                        GRA_Mode}</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    ========</span>
+<span class="sd">    Open an example Apollo 15 Geotiff</span>
+
+<span class="sd">    &gt;&gt;&gt; from plio import get_path</span>
+<span class="sd">    &gt;&gt;&gt; from plio.io.io_gdal import GeoDataSet</span>
+<span class="sd">    &gt;&gt;&gt; ds = GeoDataSet(get_path(&#39;AS15-M-0296_SML_geo.tif&#39;))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">gdalconst</span>  <span class="c1"># import here so Sphinx can build the docos, mocking is not working</span>
+    <span class="c1"># TODO: If a destination is not provided create an in-memory GeoDataSet object</span>
+    <span class="n">match_to_srs</span> <span class="o">=</span> <span class="n">match_to</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">()</span>
+    <span class="n">match_to_gt</span> <span class="o">=</span> <span class="n">match_to</span><span class="o">.</span><span class="n">geotransform</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">match_to</span><span class="o">.</span><span class="n">raster_size</span>
+
+    <span class="n">match_from__srs</span> <span class="o">=</span> <span class="n">match_from</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">()</span>
+    <span class="n">match_from__gt</span> <span class="o">=</span> <span class="n">match_from</span><span class="o">.</span><span class="n">geotransform</span>
+
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTiff&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                                               <span class="n">gdalconst</span><span class="o">.</span><span class="n">GDT_Float64</span><span class="p">)</span>
+
+    <span class="n">dst</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">match_to_gt</span><span class="p">)</span>
+    <span class="n">dst</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">match_to_srs</span><span class="p">)</span>
+    <span class="n">dst</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">SetNoDataValue</span><span class="p">(</span><span class="n">ndv</span><span class="p">)</span>
+
+    <span class="n">gdal</span><span class="o">.</span><span class="n">ReprojectImage</span><span class="p">(</span><span class="n">match_from</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">gdalconst</span><span class="p">,</span> <span class="n">resampling_method</span><span class="p">))</span>
+</pre></div>
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2017 - , Plio Developers.
+      </li>
+      <li>
+      Last updated on Oct 16, 2020.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 3.2.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>
